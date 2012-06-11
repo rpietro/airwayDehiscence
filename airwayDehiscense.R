@@ -15,16 +15,19 @@ ls()
 detach()
 
 #command below will install all packages and is only run once. remove the #if this is the first time you are running the code on RStudio, and then you can add the hash tag again
-#lapply(c("ggplot2", "psych", "RCurl", "irr", "car","Hmisc", "gmodels", "DAAG"), install.packages, character.only=T)
-
-lapply(c("ggplot2", "psych", "RCurl", "irr", "car","Hmisc", "gmodels","qpcR"), library, character.only=T)
+#lapply(c("ggplot2", "psych", "RCurl", "irr", "car","Hmisc", "gmodels", "DAAG", "gdata"), install.packages, character.only=T)
+# install.packages("catspec")
+# library(catspec)
+library(gdata)
+lapply(c("ggplot2", "psych", "RCurl", "irr","Hmisc", "gmodels","qpcR", "car"), library, character.only=T)
 
 #####################################################################################
 #IMPORTING DATA
 #####################################################################################
 
 #if you are using a file that is local to your computer, then replace path below by path to the data file. command will throw all the data into the templateData object
-airwayDehiscence <- read.csv("/Users/rpietro/Google Drive/R/nonpublicdata_publications/BronchialStrictureUNOSData/BronchialStrictureUNOSData.csv")
+airwayDehiscence <- read.csv("/Users/rpietro/Google Drive/R/nonpublicdata_publications/AirwayDehiscenceUNOSData/AirwayDehiscenceUNOSData.csv")
+#airwayDehiscence <- read.csv("/Users//mathiasworni/UNOS datasets/BronchialStrictureUNOSData.csv")
 
 #below is just to get a sense of what the dataset contains
 head(airwayDehiscence)
@@ -32,32 +35,8 @@ str(airwayDehiscence)
 names(airwayDehiscence)
 summary(airwayDehiscence)
 
-# #below will list all variable names so that we can use them throughout the analysis. btw, shortcut to apply a comment to all selected lines is CMD-SHIFT-C (should be CTRL on a PC)
-# [1] "AA_Unique_ID"           "PT_CODE"                "AA_Bronchial_Stricture"
-# [4] "TRTREJ1Y"               "AA_AR_PRE.DC"           "PST_DRUG_TRT_INFECT"   
-# [7] "AGE"                    "GENDER"                 "TX_DATE"               
-# [10] "Year.of.Tx"             "ERA.of.TX"              "Diag.Category"         
-# [13] "AA_TX_NUM"              "AA_TX_TYPE"             "AA_Recip_DM"           
-# [16] "BMI_TCR"                "BMI_RECIP"              "BMI_Change"            
-# [19] "AA_RECIP_CIG_USE"       "TOT_SERUM_ALBUM"        "STEROID"               
-# [22] "PERIP_VASC"             "RESIST_INF"             "INFECT_IV_DRUG_TRR"    
-# [25] "LIFE_SUP_TRR"           "HEMO_PA_MN_TRR"         "AA_CMV_RECIP"          
-# [28] "AGE_DON"                "GENDER_DON"             "BMI_DON_CALC"          
-# [31] "AA_BMI_RATIO"           "AA_CMV_DON"             "AA_CMV_MISMATCH"       
-# [34] "HIST_CIG_DON"           "CONTIN_CIG_DON"         "HIST_COCAINE_DON"      
-# [37] "CONTIN_COCAINE_DON"     "NON_HRT_DON"            "DIABETES_DON"          
-# [40] "DIABDUR_DON"            "PULM_INF_CONF_DON"      "PO2"                   
-# [43] "END_MATCH_LAS"          "HLAMAT"                 "HLAMIS"                
-# [46] "ABO_MAT"                "ISCHTIME"               "PST_AIRWAY"            
-# [49] "VENT_SUPPORT_TRR"       "AA_HOSP_INF"            "AA_BOS_YN"             
-# [52] "AA_MAX_BOS"             "AA_MAX_FEV"             "AA_O2_REQ"             
-# [55] "PST_DIAL"               "AA_DEATH_DATE"          "AA_SURVIVAL_STATUS"    
-# [58] "AA_FU_TIME_IN_YEARS"   
-
-
-
 #below will view data in a spreadsheet format. comment if you don't need this, but my advice is to always look at the data in a sheet format when you start getting unexpected errors, as the error might be connected to some kind of data format problem
-View(airwayDehiscence)
+#View(airwayDehiscence)
 
 attach(airwayDehiscence)
 
@@ -71,10 +50,16 @@ attach(airwayDehiscence)
 str(airwayDehiscence)
 
 #X,XXX (YY%) in induction group 1, X,XXX (YY%) in induction group 2, X,XXX (YY%) in induction group 3, and X,XXX (YY%) receiving no induction. The overall incidence of AD was ZZ% (= X,XXX/YY,YYY).
-CrossTable(inductionGroup) #variable inductionGroup will be created once we define the overall classification, see abstract for comments on one possibility
+#percentage for categories
+ctab(AA_IND_REGIMEN)
+levels(AA_IND_REGIMEN)
+#recoding, below is just a start. to know the names, please check the output of levels above (levels is the R word for alternative responses)
+steroid  <- car::recode(AA_IND_REGIMEN, " 'STEROIDS/'= 1 ; 'STEROIDS/OTHER/' = 1 ; ''  = NA ; else = '0' ")
+mode(steroid)
+
 
 #There either was or was not a significant difference in induction regimen and AD following LTx (OR: X.X, 95%CI YY, ZZ)
-model1  <- glm(PST_AIRWAY ~ AA_IND_REGIMEN + GENDER + AGE, family=binomial(link="logit")) #this is just an example of how you would build a logistic model, need to add specific variables later. notice that the results of this model are being thrown into an object called "model1" and all commands below then simply query model1
+model1  <- glm(PST_AIRWAY ~ steroid + GENDER + AGE, family=binomial(link="logit")) #this is just an example of how you would build a logistic model, need to add specific variables later. notice that the results of this model are being thrown into an object called "model1" and all commands below then simply query model1
 
 summary(model1) #gives you model results
 coefficients(model1) # model coefficients
