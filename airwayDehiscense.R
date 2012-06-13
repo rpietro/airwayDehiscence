@@ -15,11 +15,11 @@ ls()
 detach()
 
 #command below will install all packages and is only run once. remove the #if this is the first time you are running the code on RStudio, and then you can add the hash tag again
-#lapply(c("ggplot2", "psych", "RCurl", "irr", "car","Hmisc", "gmodels", "DAAG", "gdata"), install.packages, character.only=T)
-# install.packages("catspec")
-# library(catspec)
-library(gdata)
-lapply(c("ggplot2", "psych", "RCurl", "irr","Hmisc", "gmodels","qpcR", "car"), library, character.only=T)
+#lapply(c("ggplot2", "psych", "RCurl", "irr", "car","Hmisc", "gmodels", "DAAG", "gdata", "catspec"), install.packages, character.only=T)
+#install.packages("catspec")
+#install.packages("survival", repos="http://cran.r-project.org" )
+#lapply(c("ggplot2", "psych", "RCurl", "irr","Hmisc", "gmodels","qpcR", "car", "catspec", "gdata" , "catspec"), library, character.only=T)
+#library("survival")
 
 #####################################################################################
 #IMPORTING DATA
@@ -27,7 +27,9 @@ lapply(c("ggplot2", "psych", "RCurl", "irr","Hmisc", "gmodels","qpcR", "car"), l
 
 #if you are using a file that is local to your computer, then replace path below by path to the data file. command will throw all the data into the templateData object
 airwayDehiscence <- read.csv("/Users/rpietro/Google Drive/R/nonpublicdata_publications/AirwayDehiscenceUNOSData/AirwayDehiscenceUNOSData.csv")
-#airwayDehiscence <- read.csv("/Users//mathiasworni/UNOS datasets/BronchialStrictureUNOSData.csv")
+airwayDehiscence <- read.csv("/Users//mathiasworni/UNOS datasets/10_01_tbl_Airway Dehiscence Analysis.csv")
+airwayDehiscence <- read.csv("/Users/ac205/Desktop/R Source Data/10_01_tbl_Airway Dehiscence Analysis.csv")
+
 
 #below is just to get a sense of what the dataset contains
 head(airwayDehiscence)
@@ -36,10 +38,14 @@ names(airwayDehiscence)
 summary(airwayDehiscence)
 
 #below will view data in a spreadsheet format. comment if you don't need this, but my advice is to always look at the data in a sheet format when you start getting unexpected errors, as the error might be connected to some kind of data format problem
-#View(airwayDehiscence)
 
 attach(airwayDehiscence)
+names(airwayDehiscence)
+qplot(BMI_RECIP)
+BMI_RECIP_clean <- recode(BMI_RECIP, " BMI_RECIP[BMI_RECIP>100] = NA "  )
+qplot(BMI_RECIP_clean)
 
+#View(airwayDehiscence)
 
 ###########################################################################################
 #ABSTRACT RESULTS
@@ -49,29 +55,138 @@ attach(airwayDehiscence)
 #A total of XX,XXX patients were included -- to get total number of subjects you do 
 str(airwayDehiscence)
 
-#X,XXX (YY%) in induction group 1, X,XXX (YY%) in induction group 2, X,XXX (YY%) in induction group 3, and X,XXX (YY%) receiving no induction. The overall incidence of AD was ZZ% (= X,XXX/YY,YYY).
-#percentage for categories
-ctab(AA_IND_REGIMEN)
-levels(AA_IND_REGIMEN)
-#recoding, below is just a start. to know the names, please check the output of levels above (levels is the R word for alternative responses)
-steroid  <- car::recode(AA_IND_REGIMEN, " 'STEROIDS/'= 1 ; 'STEROIDS/OTHER/' = 1 ; ''  = NA ; else = '0' ")
-mode(steroid)
+#See GoogleDoc "Airway Dehiscence Backup Code" for induction medication recode if needed.
 
+#A total of 18,906 patients were analyzed. ST were included in 57% on induction regimens (n=10803), PCA in 14% (n=2650), IL2 in 28% (n=5303), CD52 antibodies in 4% (n=736) and no induction in 29% (n=5523). The overall incidence of AD was 1.34% (= 253/18,906).
+#I calculated the above in MS Access but might be good to build code for R for future purposes. - TC
 
+names(airwayDehiscence)
+CrossTable(Year.of.Tx, GENDER, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, GENDER, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, GENDER))
+
+CrossTable(Year.of.Tx, AA_Steroid_IND, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, AA_Steroid_IND, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, AA_Steroid_IND))
+
+CrossTable(Year.of.Tx, AA_Polyclonal_IND, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, AA_Polyclonal_IND, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, AA_Polyclonal_IND))
+
+CrossTable(Year.of.Tx, AA_IL-2_IND, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, AA_IL-2_IND, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, AA_IL-2_IND))
+
+CrossTable(Year.of.Tx, AA_Campath_IND, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, AA_Campath_IND, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, AA_Campath_IND))
+
+describe(AGE~PST_AIRWAY)
+t.test(AGE~PST_AIRWAY)
+sd(AGE, na.rm = FALSE) #na.rm=FALSE removes the missing from SD calculation
+tapply(AGE,PST_AIRWAY,IQR) #Will give you the IQR by grups
+tapply(AGE,PST_AIRWAY,summary) #Also will give some regular descriptives by groups
+describe.by(AGE,PST_AIRWAY) # Will give you regular descriptives by groups
+ggplot(df, aes(x=AGE)) + geom_histogram(binwidth=.5, colour="black", fill="white")
+
+describe(AGE_DON~PST_AIRWAY)
+t.test(AGE_DON~PST_AIRWAY)
+sd(AGE_DON, na.rm = FALSE) #na.rm=FALSE removes the missing from SD calculation
+tapply(AGE_DON,PST_AIRWAY,IQR) #Will give you the IQR by grups
+tapply(AGE_DON,PST_AIRWAY,summary) #Also will give some regular descriptives by groups
+describe.by(AGE_DON,PST_AIRWAY) # Will give you regular descriptives by groups
+ggplot(df, aes(x=AGE_DON)) + geom_histogram(binwidth=.5, colour="black", fill="white")
+
+CrossTable(Year.of.Tx, AA_RACE, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, AA_RACE, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, AA_RACE))
+
+describe(BMI_TCR~PST_AIRWAY)
+t.test(BMI_TCR~PST_AIRWAY)
+sd(BMI_TCR, na.rm = FALSE) #na.rm=FALSE removes the missing from SD calculation
+tapply(BMI_TCR,PST_AIRWAY,IQR) #Will give you the IQR by grups
+tapply(BMI_TCR,PST_AIRWAY,summary) #Also will give some regular descriptives by groups
+describe.by(BMI_TCR,PST_AIRWAY) # Will give you regular descriptives by groups
+ggplot(df, aes(x=BMI_TCR)) + geom_histogram(binwidth=.5, colour="black", fill="white")
+
+CrossTable(Year.of.Tx, Diag.Category, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, Diag.Category, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, Diag.Category))
+
+CrossTable(Year.of.Tx, AA_TX_TYPE, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, AA_TX_TYPE, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, AA_TX_TYPE))
+
+CrossTable(Year.of.Tx, ERA.of.TX, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, ERA.of.TX, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, ERA.of.TX))
+
+CrossTable(Year.of.Tx, AA_Recip_DM, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, AA_Recip_DM, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, AA_Recip_DM))
+
+CrossTable(Year.of.Tx, LIFE_SUP_TRR, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, LIFE_SUP_TRR, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, LIFE_SUP_TRR))
+
+#AA_CMV_MISMATCH is a variable with a lot of missing values!!! Since PST_AIRWAY most likely happens early, the influence of CMV mismatch might not be that important
+CrossTable(Year.of.Tx, AA_CMV_MISMATCH, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, AA_CMV_MISMATCH, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, AA_CMV_MISMATCH))
+
+CrossTable(Year.of.Tx, HIST_CIG_DON, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, HIST_CIG_DON, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, HIST_CIG_DON))
+
+CrossTable(Year.of.Tx, HLAMAT, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, HLAMAT, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, HLAMAT))
+
+#PO2 has a lot of missing values (4,622)
+describe(PO2~PST_AIRWAY)
+t.test(PO2~PST_AIRWAY)
+sd(PO2, na.rm = FALSE) #na.rm=FALSE removes the missing from SD calculation
+tapply(PO2,PST_AIRWAY,IQR) #Will give you the IQR by grups
+tapply(PO2,PST_AIRWAY,summary) #Also will give some regular descriptives by groups
+describe.by(PO2,PST_AIRWAY) # Will give you regular descriptives by groups
+ggplot(df, aes(x=PO2)) + geom_histogram(binwidth=.5, colour="black", fill="white")
+
+#has about 1,691 missing values
+describe(ISCHTIME~PST_AIRWAY)
+t.test(ISCHTIME~PST_AIRWAY)
+sd(ISCHTIME, na.rm = FALSE) #na.rm=FALSE removes the missing from SD calculation
+tapply(ISCHTIME,PST_AIRWAY,IQR) #Will give you the IQR by grups
+tapply(ISCHTIME,PST_AIRWAY,summary) #Also will give some regular descriptives by groups
+describe.by(ISCHTIME,PST_AIRWAY) # Will give you regular descriptives by groups
+ggplot(df, aes(x=ISCHTIME)) + geom_histogram(binwidth=.5, colour="black", fill="white")
+
+CrossTable(Year.of.Tx, HLAMAT, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+CrossTable(PST_AIRWAY, HLAMAT, chisq=TRUE, missing.include=TRUE, format="SAS", prop.r=FALSE)
+chisq.test(table(PST_AIRWAY, HLAMAT))
+
+#Univariate and multivariate regression analysis with the following predictor variables: AA_Steroid_IND +  AA_Polyclonal_IND + 
+# AA_IL-2_IND +  AA_Campath_IND;  adjusted for possible confounders: AGE + AGE_DON + GENDER + AA_RACE + BMI_TCR + Diag.Category + 
+# AA_TX_TYPE + ERA.of.TX + AA_Recip_DM + LIFE_SUP_TRR + AA_CMV_MISMATCH + HIST_CIG_DON + HLAMAT + PO2 + ISCHTIME + END_MATCH_LAS
 #There either was or was not a significant difference in induction regimen and AD following LTx (OR: X.X, 95%CI YY, ZZ)
-model1  <- glm(PST_AIRWAY ~ steroid + GENDER + AGE, family=binomial(link="logit")) #this is just an example of how you would build a logistic model, need to add specific variables later. notice that the results of this model are being thrown into an object called "model1" and all commands below then simply query model1
 
-summary(model1) #gives you model results
-coefficients(model1) # model coefficients
-confint(model1, level=0.95) # CIs for model parameters 
-fitted(model1) # predicted values
-residuals(model1) # residuals
-anova(model1) # anova table, something like anova(model1, model2) will compare two nested models
-vcov(model1) # covariance matrix for model parameters 
-influence(model1) # regression diagnostics
-layout(matrix(c(1,2,3,4),2,2)) # creates the white space for 4 graphs/page 
-plot(model1) #generates 4 graphs/page
+names(airwayDehiscence)
 
+simple.logistic1  <- glm(PST_AIRWAY ~ AA_Steroid_IND , family=binomial(link="logit")) 
+summary(simple.logistic1) #gives you model results
+coefficients(simple.logistic1) # model coefficients
+confint(simple.logistic1, level=0.95) # CIs for model parameters
+
+logistic1  <- glm(PST_AIRWAY ~ AA_Steroid_IND + AA_Polyclonal_IND + AA_Campath_IND + AGE + AGE_DON + GENDER + AA_RACE + BMI_TCR + AA_TX_TYPE + AA_Recip_DM + LIFE_SUP_TRR + AA_CMV_MISMATCH + HIST_CIG_DON + HLAMAT + PO2 + ISCHTIME + END_MATCH_LAS, family=binomial(link="logit")) 
+
+summary(logistic1) #gives you model results
+coefficients(logistic1) # model coefficients
+confint(logistic1, level=0.95) # CIs for model parameters 
+
+
+#We also reported the outcomes of patients who developed AD regardless of preceding induction regimen.  
+
+KMPlot <- survfit(Surv(AA_FU_TIME_IN_YEARS, AA_SURVIVAL_STATUS) ~ PST_AIRWAY, data=aml)
+plot(KMPlot)
 
 
 #######################################################################################
